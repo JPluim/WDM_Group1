@@ -8,3 +8,4 @@
 !Postgres/*
 !Spark/*
 !Neo4J/*
+!Elasticsearch/*
