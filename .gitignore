@@ -1,0 +1,10 @@
+# Ignore everything
+*
+
+# Except
+!README.md
+!.gitignore
+
+!Postgres/*
+!Spark/*
+!Neo4J/*

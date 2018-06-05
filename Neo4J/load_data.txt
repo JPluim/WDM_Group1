@@ -1,0 +1,57 @@
+--------------------------------------------------------------------------------------
+LOADING DATA
+--------------------------------------------------------------------------------------
+
+LOAD CSV WITH HEADERS FROM "file:///user.csv" AS row
+CREATE (n:User)
+SET n = row,
+  n.id = toInteger(row.id), n.username = row.username, n.edit_count = toInteger(row.edit_count), n.minor_edit_count = toInteger(row.minor_edit_count)
+  
+LOAD CSV WITH HEADERS FROM "file:///votes.csv" AS row
+CREATE (n:Vote)
+SET n = row,
+  n.id = toInteger(row.id),
+  n.election_id = toInteger(row.election_id),
+  n.vote = toInteger(row.vote),
+  n.user_id = toInteger(row.user_id),
+  n.vote_time = row.vote_time,
+  n.screen_name = row.screen_name
+  
+LOAD CSV WITH HEADERS FROM "file:///article.csv" AS row
+CREATE (n:Article)
+SET n = row,
+  n.article_id = toInteger(row.id),
+  n.title = row.title
+  
+LOAD CSV WITH HEADERS FROM "file:///elections.csv" AS row
+CREATE (n:Election)
+SET n = row,
+  n.id = toInteger(row.id),
+  n.user_id = toInteger(row.user_id),
+  n.promoted = toBoolean(row.promoted)
+  
+LOAD CSV WITH HEADERS FROM "file:///revision_talk.csv" AS row
+CREATE (n:Rev_article_talk)
+SET n = row,
+  n.id = toInteger(row.id),
+  n.article_id = toInteger(row.article_id),
+  n.user_id = toInteger(row.user_id),
+  n.comment = row.comment,
+  n.timestamp = row.timestamp,
+  n.word_count = toInteger(row.word_count),
+  n.related_pages = row.related_pages,
+  n.category = row.category,
+  n.minor = toInteger(row.minor)
+ 
+LOAD CSV WITH HEADERS FROM "file:///revision_user_talk.csv" AS row
+CREATE (n:Rev_user_talk)
+SET n = row,
+  n.article_id = toInteger(row.article_id),
+  n.user_id = toInteger(row.user_id),
+  n.comment = row.comment,
+  n.timestamp = row.timestamp,
+  n.word_count = toInteger(row.word_count),
+  n.related_pages = row.related_pages,
+  n.category = row.category,
+  n.id = toInteger(row.id),
+  n.minor = toInteger(row.minor)
