@@ -1,0 +1,105 @@
+--------------------------------------------------------------------------------------
+QUERY 1
+--------------------------------------------------------------------------------------
+
+MATCH (e:Election{promoted: true})-[:ELECTED_ON]->(u:User)
+WITH u as users
+MATCH (users)-[:MADE_AT]->(r:Rev_article_talk{minor: 0})
+WITH users,r.user_id as ui, count(r.user_id) as mayor_edits
+MATCH (users)-[:MADE_AT]->(r:Rev_article_talk{minor: 1})
+WITH users, count(r.user_id) as minor_edits, mayor_edits
+RETURN avg(minor_edits), avg(mayor_edits)
+UNION
+MATCH (e:Election{promoted: false})-[:ELECTED_ON]->(u:User)
+WITH u as users
+MATCH (users)-[:MADE_AT]->(r:Rev_article_talk{minor: 0})
+WITH users,r.user_id as ui, count(r.user_id) as mayor_edits
+MATCH (users)-[:MADE_AT]->(r:Rev_article_talk{minor: 1})
+WITH users, count(r.user_id) as minor_edits, mayor_edits
+RETURN avg(minor_edits), avg(mayor_edits)
+
+%execution time: 116ms
+
+--------------------------------------------------------------------------------------
+QUERY 2
+--------------------------------------------------------------------------------------
+
+MATCH (e:Election{promoted: true})-[:ELECTED_ON]->(admin:User)-[:MADE_UT]->(r:Rev_user_talk)-[:ON_UT]->(ut)<-[:ON_UT]-(r1:Rev_user_talk)<-[:MADE_UT]-(u2:User)
+WITH DISTINCT ut as ut, count(DISTINCT r) as admin_edits, count(DISTINCT r1) as edits
+RETURN avg(toFloat(admin_edits)/edits)
+UNION
+MATCH (e:Election{promoted: false})-[:ELECTED_ON]->(uvo:User)-[:MADE_UT]->(r:Rev_user_talk)-[:ON_UT]->(ut:Usertalk_page)
+WITH DISTINCT ut as ut
+MATCH (e:Election{promoted: true})-[:ELECTED_ON]->(admin:User)-[:MADE_UT]->(r:Rev_user_talk)-[:ON_UT]->(ut)<-[:ON_UT]-(r1:Rev_user_talk)<-[:MADE_UT]-(u2:User)
+WITH DISTINCT ut as ut, count(DISTINCT r) as admin_edits, count(DISTINCT r1) as edits
+RETURN avg(toFloat(admin_edits)/edits)
+
+%execution time: 42512ms
+
+--------------------------------------------------------------------------------------
+QUERY 3
+--------------------------------------------------------------------------------------
+
+MATCH (u:User)-[:VOTED_ON{vote: 1}]->(uvo:User)
+WHERE (uvo)-[:EDITED]->(:Articletalk_page)<-[:EDITED]-(u)
+RETURN count(DISTINCT u)
+UNION
+MATCH (u:User)-[:VOTED_ON{vote: 0}]->(uvo:User)
+WHERE (uvo)-[:EDITED]->(:Articletalk_page)<-[:EDITED]-(u)
+RETURN count(DISTINCT u)
+UNION
+MATCH (u:User)-[:VOTED_ON{vote: 1}]->(uvo:User)
+WHERE NOT (uvo)-[:EDITED]->(:Articletalk_page)<-[:EDITED]-(u)
+RETURN count(DISTINCT u)
+UNION
+MATCH (u:User)-[:VOTED_ON{vote: 0}]->(uvo:User)
+WHERE NOT (uvo)-[:EDITED]->(:Articletalk_page)<-[:EDITED]-(u)
+RETURN count(DISTINCT u)
+
+%execution time: 2286ms
+
+--------------------------------------------------------------------------------------
+QUERY 4
+--------------------------------------------------------------------------------------
+
+MATCH (e:Election{promoted: true})-[:ELECTED_ON]->(u:User)-[r:MADE_AT]->(rev)
+WITH DISTINCT u as u, count(extract(cat IN split(rev.category, " ")|cat)) as counting
+RETURN avg(counting)
+UNION
+MATCH (e:Election{promoted: false})-[:ELECTED_ON]->(u:User)-[r:MADE_AT]->(rev)
+WITH DISTINCT u as u, count(extract(cat IN split(rev.category, " ")|cat)) as counting
+RETURN avg(counting)
+
+%execution time: 1110ms
+
+--------------------------------------------------------------------------------------
+QUERY 5
+--------------------------------------------------------------------------------------
+
+MATCH (:Rev_article_talk)-[o:ON_AT]->(at:Articletalk_page)
+WITH count(o) as c_at, at ORDER BY c_at DESC LIMIT 1000
+MATCH (e:Election{promoted: true})-[:ELECTED_ON]->(u:User)-[:EDITED]->(at)
+RETURN count(DISTINCT u) as cu
+UNION
+MATCH (:Rev_article_talk)-[o:ON_AT]->(at:Articletalk_page)
+WITH count(o) as c_at, at ORDER BY c_at DESC LIMIT 1000
+MATCH (e:Election{promoted: false})-[:ELECTED_ON]->(u:User)-[:EDITED]->(at)
+RETURN count(DISTINCT u) as cu
+UNION
+MATCH (:Rev_article_talk)-[o:ON_AT]->(at:Articletalk_page)
+WITH count(o) as c_at, at ORDER BY c_at DESC LIMIT 1000
+MATCH (e:Election{promoted: true})-[:ELECTED_ON]->(u:User)-[:EDITED]->(at)
+WITH count(DISTINCT u) as temp_cu
+MATCH (e:Election{promoted: true})
+WITH count(e) as tu, temp_cu
+RETURN tu-temp_cu as cu
+UNION
+MATCH (:Rev_article_talk)-[o:ON_AT]->(at:Articletalk_page)
+WITH count(o) as c_at, at ORDER BY c_at DESC LIMIT 1000
+MATCH (e:Election{promoted: false})-[:ELECTED_ON]->(u:User)-[:EDITED]->(at)
+WITH count(DISTINCT u) as temp_cu
+MATCH (e:Election{promoted: true})
+WITH count(e) as tu, temp_cu
+RETURN tu-temp_cu as cu
+
+%execution time: 3351ms

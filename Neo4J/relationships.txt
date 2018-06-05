@@ -1,0 +1,54 @@
+--------------------------------------------------------------------------------------
+RELATIONSHIPS
+--------------------------------------------------------------------------------------
+MATCH (a:Article)
+WHERE a.title STARTS WITH 'User_talk:'
+SET a:Usertalk_page
+
+MATCH (a:Article)
+WHERE a.title STARTS WITH 'Talk:'
+SET a:Articletalk_page
+
+MATCH (u:User), (r:Rev_user_talk)
+WHERE u.id = r.user_id
+CREATE (u)-[:MADE_UT]->(r)
+
+MATCH (u:User), (r:Rev_article_talk)
+WHERE u.id = r.user_id
+CREATE (u)-[:MADE_AT]->(r)
+
+MATCH (r:Rev_user_talk), (ut:Usertalk_page)
+WHERE r.article_id = ut.article_id
+CREATE (r)-[:ON_UT]->(ut)
+
+MATCH (r:Rev_article_talk), (at:Articletalk_page)
+WHERE r.article_id = at.article_id
+CREATE (r)-[:ON_AT]->(at)
+
+MATCH (ut:Usertalk_page)
+SET ut.username = replace(ut.title, "User_talk:", "")
+
+MATCH (ut:Usertalk_page), (u:User)
+WHERE ut.username = u.username
+CREATE (ut)-[:BELONGS_TO]->(u)
+
+MATCH (u:User)-[:MADE_UT]->(:Rev_user_talk)-[:ON_UT]->(:Usertalk_page)-[:BELONGS_TO]->(u2:User)
+MERGE (u)-[:TALKED_DIRECTLY_TO]->(u2)
+
+MATCH (u:User)-[t:TALKED_DIRECTLY_TO]->(u)
+DELETE t
+
+MATCH (u:User)-[:MADE_AT]->(:Rev_article_talk)-[:ON_AT]->(at:Articletalk_page)
+MERGE (u)-[:EDITED]->(at)
+ 
+MATCH (e:Election), (u:User)
+WHERE e.user_id = u.id
+CREATE (e)-[:ELECTED_ON]->(u)
+
+MATCH (v:Vote), (e:Election)
+WHERE v.election_id = e.id
+CREATE (v)-[:VOTED_IN]->(e)
+
+MATCH (v:Vote)-[:VOTED_IN]->(:Election)-[:ELECTED_ON]->(uvo:User), (u2:User)
+WHERE v.user_id = u2.id
+CREATE (u2)-[:VOTED_ON{vote: v.vote}]->(uvo) 
