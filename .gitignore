@@ -1,0 +1,8 @@
+# Ignore everything
+*
+
+# Except
+!README.md
+!.gitignore
+
+!Postgres/*
